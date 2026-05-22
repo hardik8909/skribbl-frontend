@@ -160,7 +160,7 @@ export const sendGameState = (
     stompClient.publish({
 
       destination:
-        `/app/game/${roomId}`,
+        `/app/game/${roomId}/start`,
 
       body: JSON.stringify(gameState)
     });
