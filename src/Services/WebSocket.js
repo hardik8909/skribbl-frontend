@@ -10,19 +10,25 @@ export const connectWebSocket = (
   onGameState
 ) => {
 
-const socket = new SockJS(
-  "https://skribbl-clone-final-final-2.onrender.com/ws"
-);
+  // CONNECT TO BACKEND
+  const socket = new SockJS(
+    "https://skribbl-clone-final-final-2.onrender.com/ws"
+  );
+
   stompClient = new Client({
 
     webSocketFactory: () => socket,
 
     reconnectDelay: 5000,
 
+    debug: (str) => {
+      console.log("STOMP:", str);
+    },
+
     onConnect: () => {
 
       console.log(
-        "Connected to WebSocket"
+        `Connected to room: ${roomId}`
       );
 
       // =========================
@@ -36,6 +42,11 @@ const socket = new SockJS(
 
           const body = JSON.parse(
             message.body
+          );
+
+          console.log(
+            "CHAT RECEIVED:",
+            body
           );
 
           onMessageReceived(body);
@@ -55,13 +66,17 @@ const socket = new SockJS(
             drawData.body
           );
 
+          console.log(
+            "DRAW RECEIVED:",
+            body
+          );
+
           onDrawReceived(body);
         }
       );
 
       // =========================
       // GAME STATE SUBSCRIPTION
-      // ROOM SPECIFIC
       // =========================
       stompClient.subscribe(
 
@@ -73,12 +88,31 @@ const socket = new SockJS(
             gameState.body
           );
 
+          console.log(
+            "GAME STATE RECEIVED:",
+            body
+          );
+
           onGameState(body);
         }
       );
 
+      // =========================
+      // TEST GAME SYNC
+      // =========================
+      sendGameState(roomId, {
+
+        type: "SYNC_TEST",
+
+        message:
+          "Game synchronization working",
+
+        timestamp:
+          Date.now()
+      });
+
       console.log(
-        `Subscribed to room: ${roomId}`
+        `Subscribed successfully to room: ${roomId}`
       );
     },
 
@@ -101,6 +135,13 @@ const socket = new SockJS(
         "WebSocket Error:",
         error
       );
+    },
+
+    onDisconnect: () => {
+
+      console.log(
+        "Disconnected from WebSocket"
+      );
     }
   });
 
@@ -116,6 +157,11 @@ export const sendMessage = (
 ) => {
 
   if (stompClient?.connected) {
+
+    console.log(
+      "SENDING CHAT:",
+      message
+    );
 
     stompClient.publish({
 
@@ -137,6 +183,11 @@ export const sendDrawData = (
 
   if (stompClient?.connected) {
 
+    console.log(
+      "SENDING DRAW:",
+      drawData
+    );
+
     stompClient.publish({
 
       destination:
@@ -156,6 +207,11 @@ export const sendGameState = (
 ) => {
 
   if (stompClient?.connected) {
+
+    console.log(
+      "SENDING GAME STATE:",
+      gameState
+    );
 
     stompClient.publish({
 
