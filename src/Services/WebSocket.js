@@ -10,11 +10,9 @@ export const connectWebSocket = (
   onGameState
 ) => {
 
-  // CONNECT TO RENDER BACKEND
-  const socket = new SockJS(
-    "https://skribbl-clone-final-final-2.onrender.com/ws"
-  );
-
+const socket = new SockJS(
+  "https://skribbl-clone-final-final-2.onrender.com/ws"
+);
   stompClient = new Client({
 
     webSocketFactory: () => socket,
