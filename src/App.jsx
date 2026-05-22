@@ -7,8 +7,10 @@ import {
 import {
   connectWebSocket,
   sendMessage,
-  sendDrawData
-} from "./services/websocket";
+  sendDrawData,
+  sendGameState,
+  disconnectWebSocket
+} from "./Services/WebSocket";
 
 import {
   FaPaintBrush,
