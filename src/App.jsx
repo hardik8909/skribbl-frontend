@@ -57,7 +57,6 @@ function App() {
     setIsDrawer] =
     useState(false);
 
-  // LIVE TIMER
   const [currentTime,
     setCurrentTime] =
     useState(Date.now());
@@ -74,6 +73,9 @@ function App() {
 
   const drawing =
     useRef(false);
+
+  const lastPoint =
+    useRef(null);
 
   // =========================
   // WEBSOCKET CONNECTION
@@ -109,9 +111,7 @@ function App() {
 
       roomId,
 
-      // =========================
       // CHAT
-      // =========================
       (msg) => {
 
         setMessages((prev) => [
@@ -120,17 +120,15 @@ function App() {
         ]);
       },
 
-      // =========================
       // DRAW
-      // =========================
       (drawData) => {
 
-        drawFromSocket(drawData);
+        drawFromSocket(
+          drawData
+        );
       },
 
-      // =========================
       // GAME STATE
-      // =========================
       (incomingGameState) => {
 
         console.log(
@@ -142,7 +140,6 @@ function App() {
           incomingGameState
         );
 
-        // WHO CAN DRAW
         setIsDrawer(
 
           incomingGameState
@@ -159,7 +156,7 @@ function App() {
   }, [joined]);
 
   // =========================
-  // LIVE TIMER EFFECT
+  // LIVE TIMER
   // =========================
 
   useEffect(() => {
@@ -220,12 +217,10 @@ function App() {
       }
     };
 
-    // LOCAL UPDATE
     setGameState(
       newGameState
     );
 
-    // SEND TO OTHER PLAYERS
     sendGameState(
       roomId,
       newGameState
@@ -240,7 +235,7 @@ function App() {
   };
 
   // =========================
-  // DRAWING FUNCTIONS
+  // DRAWING
   // =========================
 
   const startDrawing = (e) => {
@@ -249,12 +244,27 @@ function App() {
 
     drawing.current = true;
 
-    draw(e);
+    const rect =
+      canvasRef.current
+        .getBoundingClientRect();
+
+    const x =
+      e.clientX - rect.left;
+
+    const y =
+      e.clientY - rect.top;
+
+    lastPoint.current = {
+      x,
+      y
+    };
   };
 
   const finishDrawing = () => {
 
     drawing.current = false;
+
+    lastPoint.current = null;
 
     contextRef.current.beginPath();
   };
@@ -274,6 +284,19 @@ function App() {
     const y =
       e.clientY - rect.top;
 
+    if (!lastPoint.current)
+      return;
+
+    // LOCAL DRAW
+
+    contextRef.current.beginPath();
+
+    contextRef.current.moveTo(
+
+      lastPoint.current.x,
+      lastPoint.current.y
+    );
+
     contextRef.current.lineTo(
       x,
       y
@@ -281,16 +304,15 @@ function App() {
 
     contextRef.current.stroke();
 
-    contextRef.current.beginPath();
-
-    contextRef.current.moveTo(
-      x,
-      y
-    );
-
-    // SEND DRAW DATA
+    // SEND SOCKET
 
     sendDrawData(roomId, {
+
+      prevX:
+        lastPoint.current.x,
+
+      prevY:
+        lastPoint.current.y,
 
       x,
       y,
@@ -298,14 +320,19 @@ function App() {
       color:
         selectedColor,
 
-      brushSize,
-
-      type: "draw"
+      brushSize
     });
+
+    // UPDATE LAST
+
+    lastPoint.current = {
+      x,
+      y
+    };
   };
 
   // =========================
-  // RECEIVE DRAWING
+  // SOCKET DRAW
   // =========================
 
   const drawFromSocket = (
@@ -321,31 +348,29 @@ function App() {
     contextRef.current.lineWidth =
       data.brushSize || 3;
 
+    contextRef.current.beginPath();
+
+    contextRef.current.moveTo(
+      data.prevX,
+      data.prevY
+    );
+
     contextRef.current.lineTo(
       data.x,
       data.y
     );
 
     contextRef.current.stroke();
-
-    contextRef.current.beginPath();
-
-    contextRef.current.moveTo(
-      data.x,
-      data.y
-    );
   };
 
   // =========================
-  // CHAT SEND
+  // CHAT
   // =========================
 
   const handleSend = () => {
 
     if (!message.trim())
       return;
-
-    // GUESS CHECK
 
     if (
       message.toLowerCase()
@@ -369,7 +394,7 @@ function App() {
   };
 
   // =========================
-  // ROOM JOIN SCREEN
+  // JOIN SCREEN
   // =========================
 
   if (!joined) {
@@ -425,7 +450,7 @@ function App() {
 
       {/* TOP BAR */}
 
-      <div className="flex items-center justify-between px-8 py-4 bg-gray-800 shadow-lg">
+      <div className="flex flex-col md:flex-row items-center justify-between px-8 py-4 bg-gray-800 shadow-lg gap-4">
 
         <h1 className="text-3xl font-bold flex items-center gap-2">
 
@@ -484,13 +509,13 @@ function App() {
 
       {/* MAIN CONTENT */}
 
-      <div className="flex">
+      <div className="flex flex-col lg:flex-row">
 
-        {/* LEFT SIDE */}
+        {/* LEFT */}
 
         <div className="flex-1 p-6 overflow-auto">
 
-          {/* START GAME */}
+          {/* START */}
 
           <button
             onClick={startGame}
@@ -503,9 +528,7 @@ function App() {
 
           {/* TOOLS */}
 
-          <div className="flex items-center gap-4 mb-4 bg-gray-800 p-4 rounded-xl">
-
-            {/* COLOR */}
+          <div className="flex flex-wrap items-center gap-4 mb-4 bg-gray-800 p-4 rounded-xl">
 
             <input
               type="color"
@@ -516,8 +539,6 @@ function App() {
                 )
               }
             />
-
-            {/* BRUSH */}
 
             <input
               type="range"
@@ -539,8 +560,6 @@ function App() {
 
             </span>
 
-            {/* DRAWER */}
-
             <span className="ml-auto text-yellow-400 font-bold">
 
               Drawer:
@@ -560,9 +579,13 @@ function App() {
             ref={canvasRef}
             width={900}
             height={500}
-            className="bg-white rounded-2xl shadow-2xl cursor-crosshair w-full"
+            style={{
+              touchAction: "none"
+            }}
+            className="bg-white rounded-2xl shadow-2xl cursor-crosshair w-full max-w-full"
             onMouseDown={startDrawing}
             onMouseUp={finishDrawing}
+            onMouseLeave={finishDrawing}
             onMouseMove={draw}
           />
 
@@ -602,8 +625,6 @@ function App() {
 
             </div>
 
-            {/* CHAT INPUT */}
-
             <div className="flex gap-2">
 
               <input
@@ -635,9 +656,9 @@ function App() {
 
         </div>
 
-        {/* PLAYER SIDEBAR */}
+        {/* SIDEBAR */}
 
-        <div className="w-72 bg-gray-800 p-6 shadow-xl">
+        <div className="w-full lg:w-72 bg-gray-800 p-6 shadow-xl">
 
           <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
 
