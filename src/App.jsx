@@ -98,6 +98,9 @@ function App() {
     context.lineCap =
       "round";
 
+    context.lineJoin =
+      "round";
+
     context.strokeStyle =
       selectedColor;
 
@@ -111,7 +114,10 @@ function App() {
 
       roomId,
 
+      // =========================
       // CHAT
+      // =========================
+
       (msg) => {
 
         setMessages((prev) => [
@@ -120,7 +126,10 @@ function App() {
         ]);
       },
 
+      // =========================
       // DRAW
+      // =========================
+
       (drawData) => {
 
         drawFromSocket(
@@ -128,7 +137,10 @@ function App() {
         );
       },
 
+      // =========================
       // GAME STATE
+      // =========================
+
       (incomingGameState) => {
 
         console.log(
@@ -156,7 +168,7 @@ function App() {
   }, [joined]);
 
   // =========================
-  // LIVE TIMER
+  // TIMER
   // =========================
 
   useEffect(() => {
@@ -176,7 +188,7 @@ function App() {
   }, []);
 
   // =========================
-  // UPDATE BRUSH
+  // BRUSH UPDATE
   // =========================
 
   useEffect(() => {
@@ -304,7 +316,7 @@ function App() {
 
     contextRef.current.stroke();
 
-    // SEND SOCKET
+    // SEND TO SOCKET
 
     sendDrawData(roomId, {
 
@@ -323,7 +335,7 @@ function App() {
       brushSize
     });
 
-    // UPDATE LAST
+    // UPDATE LAST POINT
 
     lastPoint.current = {
       x,
@@ -342,29 +354,54 @@ function App() {
     if (!contextRef.current)
       return;
 
-    contextRef.current.strokeStyle =
+    const ctx =
+      contextRef.current;
+
+    ctx.lineCap =
+      "round";
+
+    ctx.lineJoin =
+      "round";
+
+    ctx.strokeStyle =
       data.color || "#000";
 
-    contextRef.current.lineWidth =
-      data.brushSize || 3;
+    ctx.lineWidth =
+      Number(
+        data.brushSize || 3
+      );
 
-    contextRef.current.beginPath();
+    const prevX =
+      Number(data.prevX);
 
-    contextRef.current.moveTo(
-      data.prevX,
-      data.prevY
+    const prevY =
+      Number(data.prevY);
+
+    const x =
+      Number(data.x);
+
+    const y =
+      Number(data.y);
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      prevX,
+      prevY
     );
 
-    contextRef.current.lineTo(
-      data.x,
-      data.y
+    ctx.lineTo(
+      x,
+      y
     );
 
-    contextRef.current.stroke();
+    ctx.stroke();
+
+    ctx.closePath();
   };
 
   // =========================
-  // CHAT
+  // CHAT SEND
   // =========================
 
   const handleSend = () => {
@@ -450,7 +487,7 @@ function App() {
 
       {/* TOP BAR */}
 
-      <div className="flex flex-col md:flex-row items-center justify-between px-8 py-4 bg-gray-800 shadow-lg gap-4">
+      <div className="flex items-center justify-between px-8 py-4 bg-gray-800 shadow-lg">
 
         <h1 className="text-3xl font-bold flex items-center gap-2">
 
@@ -507,7 +544,7 @@ function App() {
 
       </div>
 
-      {/* MAIN CONTENT */}
+      {/* MAIN */}
 
       <div className="flex flex-col lg:flex-row">
 
@@ -528,7 +565,7 @@ function App() {
 
           {/* TOOLS */}
 
-          <div className="flex flex-wrap items-center gap-4 mb-4 bg-gray-800 p-4 rounded-xl">
+          <div className="flex items-center gap-4 mb-4 bg-gray-800 p-4 rounded-xl">
 
             <input
               type="color"
@@ -582,7 +619,7 @@ function App() {
             style={{
               touchAction: "none"
             }}
-            className="bg-white rounded-2xl shadow-2xl cursor-crosshair w-full max-w-full"
+            className="bg-white rounded-2xl shadow-2xl cursor-crosshair w-full"
             onMouseDown={startDrawing}
             onMouseUp={finishDrawing}
             onMouseLeave={finishDrawing}
@@ -624,6 +661,8 @@ function App() {
               )}
 
             </div>
+
+            {/* INPUT */}
 
             <div className="flex gap-2">
 
