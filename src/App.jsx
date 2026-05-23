@@ -613,18 +613,53 @@ function App() {
           {/* CANVAS */}
 
           <canvas
-            ref={canvasRef}
-            width={900}
-            height={500}
-            style={{
-              touchAction: "none"
-            }}
-            className="bg-white rounded-2xl shadow-2xl cursor-crosshair w-full"
-            onMouseDown={startDrawing}
-            onMouseUp={finishDrawing}
-            onMouseLeave={finishDrawing}
-            onMouseMove={draw}
-          />
+  ref={canvasRef}
+  width={900}
+  height={500}
+  style={{
+    touchAction: "none"
+  }}
+  className="bg-white rounded-2xl shadow-2xl cursor-crosshair w-full"
+
+  // DESKTOP
+  onMouseDown={startDrawing}
+  onMouseUp={finishDrawing}
+  onMouseLeave={finishDrawing}
+  onMouseMove={draw}
+
+  // MOBILE
+  onTouchStart={(e) => {
+
+    const touch =
+      e.touches[0];
+
+    startDrawing({
+
+      clientX:
+        touch.clientX,
+
+      clientY:
+        touch.clientY
+    });
+  }}
+
+  onTouchMove={(e) => {
+
+    const touch =
+      e.touches[0];
+
+    draw({
+
+      clientX:
+        touch.clientX,
+
+      clientY:
+        touch.clientY
+    });
+  }}
+
+  onTouchEnd={finishDrawing}
+/>
 
           {/* CHAT */}
 
