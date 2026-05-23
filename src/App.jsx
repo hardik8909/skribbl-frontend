@@ -107,7 +107,9 @@ function App() {
 
       roomId,
 
+      // =========================
       // CHAT
+      // =========================
       (msg) => {
 
         setMessages((prev) => [
@@ -116,12 +118,41 @@ function App() {
         ]);
       },
 
+      // =========================
       // DRAW
+      // =========================
       (drawData) => {
 
         drawFromSocket(drawData);
+      },
+
+      // =========================
+      // GAME STATE
+      // =========================
+      (incomingGameState) => {
+
+        console.log(
+          "SYNCED GAME STATE:",
+          incomingGameState
+        );
+
+        setGameState(
+          incomingGameState
+        );
+
+        // WHO CAN DRAW
+        setIsDrawer(
+
+          incomingGameState
+            ?.currentDrawer === "Hardik"
+        );
       }
     );
+
+    return () => {
+
+      disconnectWebSocket();
+    };
 
   }, [joined]);
 
@@ -167,9 +198,23 @@ function App() {
       }
     };
 
-    setGameState(newGameState);
+    // LOCAL UPDATE
+    setGameState(
+      newGameState
+    );
+
+    // SEND TO OTHER PLAYERS
+    sendGameState(
+      roomId,
+      newGameState
+    );
 
     setIsDrawer(true);
+
+    console.log(
+      "GAME STARTED:",
+      newGameState
+    );
   };
 
   // =========================
@@ -221,7 +266,7 @@ function App() {
       y
     );
 
-    // SEND TO SOCKET
+    // SEND DRAW DATA
 
     sendDrawData(roomId, {
 
@@ -244,6 +289,9 @@ function App() {
   const drawFromSocket = (
     data
   ) => {
+
+    if (!contextRef.current)
+      return;
 
     contextRef.current.strokeStyle =
       data.color || "#000";
@@ -620,5 +668,4 @@ function App() {
     </div>
   );
 }
-
 export default App;
