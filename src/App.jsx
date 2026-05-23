@@ -49,9 +49,6 @@ function App() {
   const [joined, setJoined] =
     useState(false);
 
-  const [timeLeft] =
-    useState(60);
-
   const [gameState,
     setGameState] =
     useState(null);
@@ -59,6 +56,11 @@ function App() {
   const [isDrawer,
     setIsDrawer] =
     useState(false);
+
+  // LIVE TIMER
+  const [currentTime,
+    setCurrentTime] =
+    useState(Date.now());
 
   // =========================
   // REFS
@@ -155,6 +157,26 @@ function App() {
     };
 
   }, [joined]);
+
+  // =========================
+  // LIVE TIMER EFFECT
+  // =========================
+
+  useEffect(() => {
+
+    const interval =
+      setInterval(() => {
+
+        setCurrentTime(
+          Date.now()
+        );
+
+      }, 1000);
+
+    return () =>
+      clearInterval(interval);
+
+  }, []);
 
   // =========================
   // UPDATE BRUSH
@@ -429,12 +451,12 @@ function App() {
 
                     (
                       gameState.roundEndTime
-                      - Date.now()
+                      - currentTime
                     ) / 1000
                   )
                 )
 
-              : timeLeft
+              : 60
 
           }s
 
@@ -466,7 +488,7 @@ function App() {
 
         {/* LEFT SIDE */}
 
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-6 overflow-auto">
 
           {/* START GAME */}
 
@@ -536,16 +558,12 @@ function App() {
 
           <canvas
             ref={canvasRef}
-            className="bg-white rounded-2xl shadow-2xl cursor-crosshair"
-            onMouseDown={
-              startDrawing
-            }
-            onMouseUp={
-              finishDrawing
-            }
-            onMouseMove={
-              draw
-            }
+            width={900}
+            height={500}
+            className="bg-white rounded-2xl shadow-2xl cursor-crosshair w-full"
+            onMouseDown={startDrawing}
+            onMouseUp={finishDrawing}
+            onMouseMove={draw}
           />
 
           {/* CHAT */}
@@ -596,8 +614,8 @@ function App() {
                     e.target.value
                   )
                 }
-                className="flex-1 p-3 rounded bg-gray-700 outline-none"
-                placeholder="Type guess..."
+                placeholder="Type your guess..."
+                className="flex-1 p-3 rounded-lg bg-gray-700 text-white outline-none border border-gray-600"
               />
 
               <button
@@ -668,4 +686,5 @@ function App() {
     </div>
   );
 }
+
 export default App;
